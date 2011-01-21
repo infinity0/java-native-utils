@@ -17,16 +17,19 @@ def split_to_list(out):
 
 tree_old = sys.argv[1]
 
-trees = {}
+parts = {}
 for path in PATH:
-	path = os.path.join(ROOT, path)
-	treeinfo = git_cmd("ls-tree", tree_old, path)
-	if treeinfo: trees[path] = treeinfo.split('	')[0].split(' ')[2]
+	treeinfo = git_cmd("ls-tree", tree_old, os.path.join(ROOT, path))
+	if treeinfo: parts[path] = treeinfo.split('	')[0].split(' ')
+#print >>sys.stderr, parts
 
 git_cmd("rm", "-rq", "--cached", "--ignore-unmatch", "*")
 
-for path, tree in trees.iteritems():
-	git_cmd("read-tree", "--prefix=%s/" % path, tree)
+for path, (mode, nodetype, sha1) in parts.iteritems():
+	if nodetype[0] == 'b': # blob
+		git_cmd("update-index", "--add", "--cacheinfo", mode, sha1, path)
+	elif nodetype[0] == 't': # tree
+		git_cmd("read-tree", "--prefix=%s/" % path, sha1)
 
 tree_new = git_cmd("write-tree")
 
