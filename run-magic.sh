@@ -11,7 +11,7 @@ if [ ! -d i2p ]; then
 	git clone git://github.com/robertfoss/i2p.git
 	cd i2p
 	git checkout unknown
-	git filter-branch --env-filter "source $SCRIPT_BASE_DIR/env-filter_fix-commit-metadata-i2p.sh" HEAD
+	git filter-branch --env-filter ". $SCRIPT_BASE_DIR/env-filter_fix-commit-metadata-i2p.sh" HEAD
 	cd ..
 fi
 
