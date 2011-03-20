@@ -1,0 +1,16 @@
+i2p                 rewrite-i2p-i2p             core/c                src/c
+|                   |                           core/java             .
+|                   |                           |   src/freenet/support/CPUInformation
+|                   |                           |   src/net/i2p/util/NativeBigInteger.java
+
+contrib-staging     rewrite-freenet-contrib     NativeBigInteger      src/c/jbigi
+|                   |                           jcpuid                src/c/jcpuid
+|                   |                           NativeThread          src/c/jnthread
+
+fred-staging        rewrite-freenet-fred        .                     .
+|                   |                           |   src/freenet/support/CPUInformation
+|                   |                           |   src/net/i2p/util/NativeBigInteger.java
+|                   |                           |   test/net/i2p/util/NativeBigIntegerTest.java
+|                   |                           |   src/freenet/support/io/NativeThread.java
+
+End

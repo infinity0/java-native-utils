@@ -1,35 +1,47 @@
 #!/usr/bin/python
 
 import sys, os
+from gitutils import parse_rewrites, iter_rewrite_paths
 from subprocess import Popen, PIPE
 
-PATH = os.environ["GITUTILS_KEEP_PATH"].split(":")
-ROOT = os.environ.get("GITUTILS_KEEP_ROOT", "")
+DEBUG_MODE = os.getenv("GITUTILS_DEBUG", False)
+REWRITE_FILE = os.getenv("GITUTILS_REWRITE_FILE", "../../.../REWRITES")
 
 def git_cmd(*args):
-	#print >>sys.stderr, "+ git", " ".join(args)
+	if DEBUG_MODE:
+		print >>sys.stderr, "+ git", " ".join(args)
 	return Popen(["git"] + list(args), stdout=PIPE).communicate()[0].rstrip('\n')
 
 def split_to_list(out):
 	return out.split('\n') if out else []
 
-## prune paths
+with open(REWRITE_FILE) as fp:
+	rewrites = parse_rewrites(fp, os.getenv("GITUTILS_ORIG_REPO"), os.getenv("GITUTILS_REWR_REPO"))
+	#print >>sys.stderr, rewrites
 
 tree_old = sys.argv[1]
 
-parts = {}
-for path in PATH:
-	treeinfo = git_cmd("ls-tree", tree_old, os.path.join(ROOT, path))
-	if treeinfo: parts[path] = treeinfo.split('	')[0].split(' ')
-#print >>sys.stderr, parts
+## read objects to keep from index
+
+keep_trees = {}  # dict { root: { path, treeinfo } }
+for old_path, new_path in iter_rewrite_paths(rewrites):
+	treeinfo = git_cmd("ls-tree", tree_old, old_path)
+	if treeinfo: keep_trees[new_path] = treeinfo.split('	')[0].split(' ')
+
+## re-attach objects to index
 
 git_cmd("rm", "-rq", "--cached", "--ignore-unmatch", "*")
-
-for path, (mode, nodetype, sha1) in parts.iteritems():
+# sorted() is required so read-tree --prefix doesn't give errors
+for new_path, treeinfo in sorted(keep_trees.iteritems()):
+	mode, nodetype, sha1 = treeinfo
 	if nodetype[0] == 'b': # blob
-		git_cmd("update-index", "--add", "--cacheinfo", mode, sha1, path)
+		git_cmd("update-index", "--add", "--cacheinfo", mode, sha1, new_path)
 	elif nodetype[0] == 't': # tree
-		git_cmd("read-tree", "--prefix=%s/" % path, sha1)
+		args = ["read-tree", "--prefix=%s/" % new_path, sha1]
+		if new_path == ".": del args[1]  # --prefix=./ gives error
+		git_cmd(*args)
+	else:
+		raise ValueError("unexpected treeinfo: %s" % treeinfo)
 
 tree_new = git_cmd("write-tree")
 

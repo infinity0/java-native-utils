@@ -3,8 +3,9 @@
 
 PKG_SRC="$1"
 PKG_DST="$2"
-export GITUTILS_KEEP_ROOT="$3"
-export GITUTILS_KEEP_PATH="src/freenet/support/CPUInformation:src/net/i2p/util/NativeBigInteger.java:test/net/i2p/util/NativeBigIntegerTest.java"
+export GITUTILS_ORIG_REPO="$PKG_SRC"
+export GITUTILS_REWR_REPO="$PKG_DST"
+export GITUTILS_REWRITE_FILE="$(readlink -f REWRITES)"
 
 ###############################################################################
 
@@ -16,16 +17,9 @@ if [ ! -d "$PKG_SRC"/.git ]; then echo >&2 "No git repo in $PKG_SRC; fix this an
 ## log the commits from the source repo
 
 cd "$PKG_SRC"
-OLDIFS="$IFS"
-IFS=":"
-for path in $GITUTILS_KEEP_PATH; do
-	if [ -n "$GITUTILS_KEEP_ROOT" ]; then
-		G_K_PATH="$G_K_PATH $GITUTILS_KEEP_ROOT/$path"
-	else
-		G_K_PATH="$G_K_PATH $path"
-	fi
+for path in $("$SCRIPT_BASE_DIR"'/gitutils.py' parse-rewrites "$GITUTILS_REWRITE_FILE" "$PKG_SRC" "$PKG_DST" | cut '-d ' -f1); do
+  G_K_PATH="$G_K_PATH $path"
 done
-IFS="$OLDIFS"
 git log -- $G_K_PATH > "../commits_${PKG_SRC}.log"
 cd ..
 
@@ -67,4 +61,4 @@ cd ..
 rm -rf "$PKG_DST"-tmp
 
 echo "Git repo pruned successfully to: $PKG_DST"
-echo "Kept paths: $GITUTILS_KEEP_PATH"
+echo "Kept paths: $G_K_PATH"

@@ -7,13 +7,14 @@ if [ ! -d fred-staging ]; then
 	git clone git://github.com/freenet/fred-staging.git
 fi
 
-if [ ! -d i2p ]; then
-	git clone git://github.com/robertfoss/i2p.git
-	cd i2p
-	git checkout unknown
-	git filter-branch --env-filter ". $SCRIPT_BASE_DIR/env-filter_fix-commit-metadata-i2p.sh" HEAD
-	cd ..
+if [ ! -d contrib-staging ]; then
+	git clone git://github.com/freenet/contrib-staging.git
 fi
 
-"$SCRIPT_BASE_DIR"'/extract-java-native-libs.sh' fred-staging jnu_fred-staging
-"$SCRIPT_BASE_DIR"'/extract-java-native-libs.sh' i2p jnu_i2p core/java
+if [ ! -d i2p ]; then
+  git clone git://github.com/ducki2p/i2p.git
+fi
+
+"$SCRIPT_BASE_DIR"'/extract-java-native-libs.sh' contrib-staging rewrite-freenet-contrib
+"$SCRIPT_BASE_DIR"'/extract-java-native-libs.sh' i2p rewrite-i2p-i2p
+"$SCRIPT_BASE_DIR"'/extract-java-native-libs.sh' fred-staging rewrite-freenet-fred
