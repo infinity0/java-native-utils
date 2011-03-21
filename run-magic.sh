@@ -15,11 +15,11 @@ select_and_rewrite_repo() {
 	REWR_REPO="$2"
 	ORIG_PROJ="$3"
 
-	ORIG_BRAN=$(cd "$ORIG_REPO" && git branch | grep '^\*' | cut -f2 '-d ')
-
 	if [ ! -d "$ORIG_REPO" ]; then
 		git clone git://github.com/"$ORIG_PROJ"/"$ORIG_REPO".git
 	fi
+
+	ORIG_BRAN=$(cd "$ORIG_REPO" && git branch | grep '^\*' | cut -f2 '-d ')
 
 	if [ ! -d "$REWR_REPO" ]; then
 		"$SCRIPT_BASE_DIR"'/extract-java-native-libs.sh' "$ORIG_REPO" "$REWR_REPO"
